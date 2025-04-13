@@ -1,4 +1,4 @@
-bs4>=0.0.2
+beautifulsoup4>=4.13.3
 fire>=0.5.0
 ftfy>=6.1.3
 joblib>=1.3.2
@@ -8,9 +8,11 @@ pandas>=1.5.3
 Pillow>=9.0.1
 pudb>=2022.1.3
 py-ankiconnect>=1.1.0
+RapidFuzz==3.13.0
 requests>=2.25.1
 rtoml>=0.9.0
 stability-sdk>=0.8.5  # if encountering grpcio install errors, comment this line
+tenacity>=9.1.2
 tiktoken>=0.5.2
 tqdm>=4.57.0
 tqdm-logger>=1.0.1
