@@ -99,7 +99,9 @@ def replace_media(
     warnings.filterwarnings("ignore", category=UserWarning, module='bs4')
 
     assert mode in ["add_media", "remove_media"]
-    assert content.strip()
+    # If content is empty, return empty content and empty media dict
+    if not content or not content.strip():
+        return content, {}
     if media is None:
         media = {}
     assert isinstance(media, dict)

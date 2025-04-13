@@ -1,7 +1,7 @@
 """
 A module for generating illustrations for Anki cards using LLMs and image generation models.
 
-This module provides functionality to automatically create relevant illustrations 
+This module provides functionality to automatically create relevant illustrations
 for Anki cards using large language models to generate prompts, which are then
 used with image generation models like DALL-E or Stable Diffusion.
 """
@@ -243,13 +243,23 @@ class AnkiIllustrator:
         self.n_image = n_image
         self.major_system = major_system
 
-        if isinstance(field_names, list):
+        # Load all notes first to get fields if None is provided
+        if field_names is None:
+            red(f"No field names provided, will use all fields from notes")
+            # Will set field_names later after loading notes
+            self.field_names = None
+        elif isinstance(field_names, list):
             assert not any("," in f for f in field_names), (
                 "Detected a list of field_names where one contains a comma")
-        else:
-            assert isinstance(field_names, str)
+            self.field_names = field_names
+        elif isinstance(field_names, str):
             field_names = field_names.split(",")
-        self.field_names = field_names
+            self.field_names = field_names
+        elif isinstance(field_names, tuple):
+            field_names = list(field_names)
+            self.field_names = field_names
+        else:
+            raise ValueError(f"field_names must be list, tuple, string or None, not {type(field_names)}")
 
         # load user_anchors
         self.anchors = {}
@@ -539,7 +549,17 @@ class AnkiIllustrator:
         n = len(imgs_dict)
         contenthash = hashlib.md5(
             str(note["formatted_content"]).encode()).hexdigest()
-        original_content = note["fields"]["AnkiIllustrator"]["value"].strip()
+        
+        # Use Mnemonic field instead of AnkiIllustrator
+        if "Mnemonic" not in note["fields"]:
+            # Need to add Mnemonic field to the note
+            red(f"Note {note['noteId']} doesn't have a Mnemonic field. Adding it.")
+            # Create empty field in Anki note
+            updatenote(note["noteId"], fields={"Mnemonic": ""})
+            original_content = ""
+        else:
+            original_content = note["fields"]["Mnemonic"]["value"].strip()
+            
         full_html = ""
         imgs_name = []
 

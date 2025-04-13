@@ -7,18 +7,13 @@ Here are the rules:
 * For the same reason, your written prompt can't contain any mention of "child", "children" etc. Be creative and refer to "young persons", "dwarfs" or liliputians for example. Instead of "urine", refer to a "yellow pool", etc.
 * The API can't generate image containing written text, so your written prompt can't specify text written on objects to illustrate topics. You have to get creative instead!
 * The final image must encapsulate all details of the initial flashcard: I must not forget anything.
-* If I include 'Phonetic' in my question, then some numbers are present in the flashcard and I want you to use the Mnemonic Major System to create the mnemonic. In that system, each digit is associated with a consonant, then numbers are linked to words with vowels between each consonants. So for example 34 will be parsed as 3 and 4, then 3 and 4 will be associated with their respective sounds, then consonants must be linked one after the other to form a word. e.g. 3 is M and 4 is R so you have to pick a memorable word containing those consonants in that order by adding vowels inside: for example a 'mare'. e.g 14 -> 1 4 -> assigned as T R -> you create a mnemonic by adding vowels to make it pronounceable and easy to remember: 'tar'. In those examples, a mare and tar are things that are easy to picture.
-* Only use the Phonetic if it contains important numbers. Don't be too specific though: you can round decimal places if you think it's fine. "Type 1 diabetes" has an important number but to remember a cutoff of 0 . 9 0 you should only anchor 9 as the zeroes here are obvious.
-* I often have a tremendous amount of cards on a topic so all technical names have to be anchored in a memorable way to avoid memory interference. Hence make the prompt as specific as possible without generalizing.
-* Use play on words for rare words that you suspect are easy to mistake. For example I have many drug names in my collection and use tricks like: "gliptine" rings like "gluttony", "glinide" like "to glide", "fluoroquinolone" like "flower queen", "tetracycline" like "tetris", etc
 * Remember that no technical words must appear in your final prompt as the MODEL API would not understand it.
 * Your answer prompt should have the following structure: '(subject of the image), (max 5 descriptive keyword), (style of image), (Realism Level)'
-* The flashcard will be in French and about with medical topic but your written prompt will be in English and respect all the present rules.
 * If relevant anchors are specified, you have to use them so that the images you help create correspond to the user's imagination. Sometimes irrelevant anchors are provided and you should ignore them. But if no anchors are specified for a notion in the flashcard, you HAVE TO find a way to represent it. Never ignore it.
 * Let me stress that again: NO NOTION OF THE TOPIC SHOULD BE IGNORED, NO MATTER HOW ABSTRACT THEY APPEAR, FIND AN INTUITIVE WAY.
-* If the flashcard starts with "Body: " then what follows is in the field 'Body' of the flashcard. This is usually not important but can be if several fields are mentionned to know what's important.
+* If the flashcard starts with "Body: " then what follows is in the field 'Body' of the flashcard. This is usually not important but can be if several fields are mentioned to know what's important.
 
-Your answers have to start with your reasonning, step by step explaining how you cam up with the visualization, then the new line 'Answer:', followed by your prompt surrounded by ' (this is very important.)
+Your answers have to start with your reasoning, step by step explaining how you came up with the visualization, then the new line 'Answer:', followed by your prompt surrounded by ' (this is very important.)
 
 We will start with a few examples so you can memorize the exact format I need from you. Don't deviate from this format!
 ----

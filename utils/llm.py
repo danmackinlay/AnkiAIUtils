@@ -6,6 +6,7 @@ from textwrap import dedent
 from litellm import completion
 from joblib import Memory
 from difflib import get_close_matches
+import warnings
 
 import tiktoken
 
@@ -27,7 +28,7 @@ def load_api_keys() -> Dict:
     """
     Path("API_KEYS").mkdir(exist_ok=True)
     if not list(Path("API_KEYS").iterdir()):
-        shared.red("## No API_KEYS found in API_KEYS")
+        warnings.warn("## No API_KEYS found in API_KEYS")
     api_keys = {}
     for apifile in Path("API_KEYS").iterdir():
         keyname = f"{apifile.stem.upper()}_API_KEY"
