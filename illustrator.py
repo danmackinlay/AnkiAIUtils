@@ -95,16 +95,16 @@ mem = Memory(".cache", verbose=False)
 def cached_image_generation(*args, **kwargs):
     """
     Cached wrapper around litellm's image_generation function.
-    
+
     Uses joblib.Memory to cache results to avoid regenerating identical images.
-    
+
     Parameters
     ----------
     *args
         Positional arguments passed to image_generation
     **kwargs
         Keyword arguments passed to image_generation
-        
+
     Returns
     -------
     dict
@@ -120,7 +120,7 @@ class AnkiIllustrator:
 
     def __init__(
         self,
-        query: str = "(rated:2:1 OR rated:2:2 OR tag:AnkiIllustrator::todo OR tag:AnkiIllustrator::FAILED) -tag:AnkiIllustrator::to_keep -is:suspended -body:*img*",
+        query: str = "(rated:2:1 OR rated:2:2 OR tag:AnkiIllustrator::todo OR tag:AnkiIllustrator::FAILED) -tag:AnkiIllustrator::to_keep -is:suspended -card:Mnemonic:*img*",
         field_names: List[str] = None,
         n_image: int = 1,
         sd_steps: int = 100,
@@ -132,9 +132,9 @@ class AnkiIllustrator:
         dataset_path: str = None,
         dataset_sanitize_path: str = None,
         max_sanitize_trial: int = 4,
-        # llm_model: str = "openai/gpt-4o",
+        llm_model: str = "openai/gpt-4o",
         # llm_model: str = "anthropic/claude-3-5-sonnet-20240620",
-        llm_model: str = "openrouter/anthropic/claude-3.5-sonnet:beta",
+        # llm_model: str = "openrouter/anthropic/claude-3.5-sonnet:beta",
         # embedding_model: str = "mistral/mistral-embed",
         embedding_model: str = "openai/text-embedding-3-small",
         image_model: str = "openai/dall-e-3",
@@ -302,10 +302,7 @@ class AnkiIllustrator:
 
         # format browser query
         self.original_query = query
-        if not force:
-            # only if illustrator has not been updated
-            query += f" -AnkiIllustrator:*VERSION:{self.VERSION}* "
-        else:
+        if force:
             red("--force enabled, this will not ignore cards with illustration")
 
         # sync first
@@ -362,14 +359,32 @@ class AnkiIllustrator:
         assert len(notes_info) == len(notes), "Invalid notes info length"
         self.notes_info = notes_info
 
-        # check that no media re present in the main field
+        # If no field names were provided, use all fields from all notes
+        if self.field_names is None:
+            all_fields = set()
+            for note in notes_info:
+                all_fields.update(note["fields"].keys())
+            self.field_names = sorted(list(all_fields))
+            red(f"Using all fields found in notes: {', '.join(self.field_names)}")
+
+        # check if we should process the notes
+        filtered_notes = []
         for note in notes_info:
-            for field_name in self.field_names:
-                _, media = replace_media(
-                    content=note["fields"][field_name]["value"],
-                    media=None,
-                    mode="remove_media")
-                assert not media, f"Found media '{media}' in {note}"
+            # Skip notes that already have images in the Mnemonic field unless force is used
+            if "Mnemonic" in note["fields"] and note["fields"]["Mnemonic"]["value"].strip():
+                mnemonic_content = note["fields"]["Mnemonic"]["value"]
+
+                # Check for image content without using replace_media
+                if "<img " in mnemonic_content and not force:
+                    red(f"Skipping note {note['noteId']} as it already has images (use --force to override)")
+                    continue
+
+            filtered_notes.append(note)
+
+        notes_info = filtered_notes
+        self.notes_info = notes_info
+        if not notes_info:
+            raise Exception("No notes to process after filtering")
 
         # filter notes
         self._extract_content()
@@ -559,7 +574,7 @@ class AnkiIllustrator:
             original_content = ""
         else:
             original_content = note["fields"]["Mnemonic"]["value"].strip()
-            
+
         full_html = ""
         imgs_name = []
 
@@ -592,23 +607,30 @@ class AnkiIllustrator:
 
             # future field content
             field_content = f'<img src="{img_name}" '
-            field_content += f'title="DATE:{self.today} '
-            if "stablediffusion" in self.image_model.lower():
-                field_content += f"STEPS:{self.sd_steps} "
-            if n != 1:
-                field_content += f"N:{i+1}/{n} "
-            field_content += f"IMG_MODEL:{self.image_model} "
-            field_content += f'TRIAL:{d["trial"]} '
-            if self.image_model == "StableDiffusion":
-                field_content += f'CFGSCALE:{d["cfg"]} '
-                field_content += f'SEED:{d["seed"]} '
-            field_content += f"LLMMODEL:{self.llm_model} "
-            field_content += f"VERSION:{self.VERSION}\n"
-            field_content += (
-                f'CLOZE:{escape(note["formatted_content"])}\n'
-            )
-            field_content += f'REASONNING: {escape(reasonning)}\n\n'
-            field_content += f'PROMPT: {escape(d["img_prompt"])}"'
+
+            # Check if debug mode is enabled (with default to False if not set)
+            debug_mode = getattr(self, 'debug', False)
+
+            # Include detailed metadata only in debug mode
+            if debug_mode:
+                field_content += f'title="DATE:{self.today} '
+                if "stablediffusion" in self.image_model.lower():
+                    field_content += f"STEPS:{self.sd_steps} "
+                if n != 1:
+                    field_content += f"N:{i+1}/{n} "
+                field_content += f"IMG_MODEL:{self.image_model} "
+                field_content += f'TRIAL:{d["trial"]} '
+                if self.image_model == "StableDiffusion":
+                    field_content += f'CFGSCALE:{d["cfg"]} '
+                    field_content += f'SEED:{d["seed"]} '
+                field_content += f"LLMMODEL:{self.llm_model} "
+                field_content += f"VERSION:{self.VERSION}\n"
+                field_content += f'CLOZE:{escape(note["formatted_content"])}\n'
+                field_content += f'REASONNING: {escape(reasonning)}\n\n'
+                field_content += f'PROMPT: {escape(d["img_prompt"])}'
+            else:
+                field_content += f'title="Generated by AnkiIllustrator" '
+
             field_content += ' class="AnkiIllustratorImages"'
             field_content += ">"
 
@@ -617,75 +639,54 @@ class AnkiIllustrator:
         # close the image container
         full_html += "</span><br>"
 
-        # append reasonning just after the image(s)
-        reason = escape(reasonning).splitlines()
-        for i, li in enumerate(reason):
-            sp = li.split(":", 1)
-            if len(sp) == 2:
-                reason[i] = f"<b>{sp[0].title()}</b>" + sp[1]
-        reason = "<br>".join(reason)
-        full_html += f"<br>{reason}"
-        # and prompt
-        full_html += f'<br><br><b>Prompt</b> "{escape(imgs_dict[0]["img_prompt"])}"'.replace("\n", "<br>")
+        # Filter reasoning to show only the parts we want
+        reason_lines = escape(reasonning).splitlines()
+        filtered_reason = []
 
-        # add version and date
-        full_html += f"<br>[DATE:{self.today} VERSION:{self.VERSION} LLMMODEL:{self.llm_model} IMAGEMODEL:{self.image_model} COST:{total_cost:.4f}]"
+        # Define sections to always show
+        always_show = ["Step by step decomposition", "Imagining"]
+
+        # Track if we're in a section that should be shown
+        show_section = False
+        current_section = None
+
+        for line in reason_lines:
+            # Check if this is the start of a new section
+            if ":" in line and not line.startswith(" "):
+                section_name = line.split(":", 1)[0].strip()
+                current_section = section_name
+
+                # Determine if this section should be shown
+                if any(section.lower() in section_name.lower() for section in always_show):
+                    show_section = True
+                else:
+                    # Only show other sections in debug mode (default to False if not set)
+                    show_section = getattr(self, 'debug', False)
+
+            # Add the line if it's in a section we want to show
+            if show_section:
+                sp = line.split(":", 1)
+                if len(sp) == 2:
+                    filtered_reason.append(f"<b>{sp[0].title()}</b>" + sp[1])
+                else:
+                    filtered_reason.append(line)
+
+        reason = "<br>".join(filtered_reason)
+        full_html += f"<br>{reason}"
+
+        # Add prompt only in debug mode
+        if getattr(self, 'debug', False):
+            full_html += f'<br><br><b>Prompt</b> "{escape(imgs_dict[0]["img_prompt"])}"'.replace("\n", "<br>")
+
+        # add version and date only in debug mode
+        if getattr(self, 'debug', False):
+            full_html += f"<br>[DATE:{self.today} VERSION:{self.VERSION} LLMMODEL:{self.llm_model} IMAGEMODEL:{self.image_model} COST:{total_cost:.4f}]"
 
         # restore previous field content if nonempty
         if original_content:
             full_html += "<br><br>"
-
-            # wrap the previous content in a detail tag
-            # remove previous detail tag
-            original_content = re.sub(
-                r"\</?details\>|\</?summary\>", "", original_content
-            )
-            # also remove italics and other sentence just in case
-            original_content = re.sub(
-                r"\<i\>.*?\</i\>", "", original_content, flags=re.M | re.DOTALL
-            )
-            # keep only the images actually, to get rid of the span etc
-            soup = BeautifulSoup(original_content, "html.parser")
-
-            # remove possible duplication of old image
-            passed_imgs = []
-            for oldimg in soup.find_all("img"):
-                if str(oldimg) not in passed_imgs:
-                    passed_imgs.append(str(oldimg))
-
-            # make sure the old images contain the right class
-            for i, p in enumerate(passed_imgs):
-                passed_imgs[i] = re.sub(
-                    'class=".*?"',
-                    'class="AnkiIllustratorOldImages"',
-                    passed_imgs[i],
-                )
-                if "class" not in passed_imgs[i]:
-                    assert passed_imgs[i][-1] == ">", "invalid passed img"
-                    passed_imgs[i] = passed_imgs[i][:-1]
-                    passed_imgs[i] += ' class="AnkiIllustratorOldImages">'
-
-            # TODO keep only the last 3 generations based on date
-
-            if (not passed_imgs) and "img" in original_content:
-                # failed to parse passed only images
-                breakpoint()
-
-            original_content = "".join(passed_imgs)
-
-            # remove previous style setting including size
-            original_content = re.sub(
-                r'style=".*?"',
-                " ",
-                original_content,
-            )
-            original_content = re.sub(
-                r'((max-)?(width|height))[=:]"?\d+(px|%)?"?',
-                " ",
-                original_content,
-            )
             full_html += "<!--SEPARATOR-->"
-            full_html += "<details><summary>Previous illustrations</summary>"
+            full_html += "<details><summary>Previous content</summary>"
             full_html += original_content
             full_html += "</details>"
 
@@ -698,7 +699,7 @@ class AnkiIllustrator:
 
         # update the note
         yel("Updating note field")
-        updatenote(nid, fields={"AnkiIllustrator": full_html})
+        updatenote(nid, fields={"Mnemonic": full_html})
 
         # add tag to updated note
         yel("Adding tag")
@@ -768,7 +769,10 @@ class AnkiIllustrator:
             fields = f["fields"]
             content = ""
             for fn in self.field_names:
-                content += f"\n{fn.title()}: {fields[fn]['value'].strip()}"
+                if fn in fields:
+                    content += f"\n{fn.title()}: {fields[fn]['value'].strip()}"
+                else:
+                    red(f"Warning: Field '{fn}' not found in note {f['noteId']}")
             content = content.strip()
 
             orig_content = content
@@ -808,7 +812,7 @@ class AnkiIllustrator:
                 # remove cloze number if present
                 digit_prep = re.sub(r"{{c\d+\s?(::)?|}}", "", digit_prep)
                 for rom, rep in roman_numerals.items():
-                    digit_prep = re.sub(r"(\W" + rom + "\W)", r"\1 (" + str(rep) + ")", digit_prep)
+                    digit_prep = re.sub(r"([^\w]" + rom + r"[^\w])", r"\1 (" + str(rep) + ")", digit_prep)
 
                 # add space around digits
                 digit_prep = re.sub(r"(\d)", r" \1 ", digit_prep)
@@ -1183,7 +1187,7 @@ def parse_llm_answer(response : Dict) -> Tuple[str, str, str]:
         reasonning = "\n".join(reasonning).strip()
         discarded = "\n".join(discarded_before).strip() + "\n[REASONING+PROMPT]\n" + "\n".join(discarded_after).strip()
         if discarded:
-            red(f"Found lines after the image prompt that are to be discarded instead of being included in the image prompt:\n'''\{discarded}\n'''")
+            red(f"Found lines after the image prompt that are to be discarded instead of being included in the image prompt:\n'''{discarded}\n'''")
         assert reasonning.strip(), f"Invalid llm empty reasonning: {reasonning} ({prp})"
 
 
