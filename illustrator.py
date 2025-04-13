@@ -974,7 +974,7 @@ class AnkiIllustrator:
         try:
             result = cached_image_generation(
                 prompt=prompt,
-                model="dall-e-3",
+                model="openai/dall-e-3",
                 quality="standard",
                 size="1024x1024",
                 style="natural",
@@ -1146,17 +1146,28 @@ def parse_llm_answer(response : Dict) -> Tuple[str, str, str]:
     prp = response["choices"][0]["message"]["content"].strip()
     discarded = ""
     try:
-        sp = prp.split("Answer: '")
+        # Try different possible formats
+        if "Answer: '" in prp:
+            sp = prp.split("Answer: '")
+        elif "*Answer:*" in prp:
+            sp = prp.split("*Answer:*")
+        elif "Answer:" in prp:
+            sp = prp.split("Answer:")  # Fallback to just "Answer:"
+        else:
+            sp = [prp, ""]  # Last resort, consider everything as reasoning
+            
         assert len(sp) == 2, f"Invalid LLM answer split length: {len(sp)}\nFull answer:\n'{prp}'"
         reasonning, prompt = sp[0].strip(), sp[1].strip()
         assert reasonning.strip(), f"Invalid LLM answer: empty reasonning: {reasonning}\nFull answer:\n'{prp}'"
         assert prompt.strip(), f"Invalid LLM answer: image prompt not found:\nFull answer:\n'{prp}'"
-        while prompt[0] in [" ", "'", '"']:
+        while prompt and prompt[0] in [" ", "'", '"', '\n']:
             prompt = prompt[1:]
-        while prompt[-1] in [" ", "'", '"']:
+        while prompt and prompt[-1] in [" ", "'", '"', '\n']:
             prompt = prompt[:-1]
         assert prompt.strip(), f"Invalid LLM answer: image prompt not found:\nFull answer:\n'{prp}'"
-        assert len(prompt.splitlines()) == 1, f"Invalid LLM answer: image prompt contained multiple lines:\nFull answer:\n'{prp}'"
+        if len(prompt.splitlines()) > 1:
+            # Take only the first line if multiple lines
+            prompt = prompt.splitlines()[0].strip()
 
     except Exception as err:
         red(f"Error when parsing LLM answer: '{err}'\nTrying another way.")
@@ -1172,7 +1183,7 @@ def parse_llm_answer(response : Dict) -> Tuple[str, str, str]:
             elif not reasonning:
                 discarded_before.append(li)
             elif prompt:
-                discarded.append(li)
+                discarded_after.append(li)
             elif li.startswith("Answer:"):
                 prompt = li.replace("Answer:", "", 1).strip()
                 assert reasonning, f"Invalid LLM answer: found image prompt before reasonning:\nFull answer:\n'{prp}'"
@@ -1192,7 +1203,8 @@ def parse_llm_answer(response : Dict) -> Tuple[str, str, str]:
 
 
     # extra check just in case
-    assert len(prompt.splitlines()) == 1, f"Invalid LLM answer: image prompt contained multiple lines:\nFull answer:\n'{prp}'"
+    if len(prompt.splitlines()) > 1:
+        prompt = prompt.splitlines()[0].strip()
     assert reasonning.strip(), f"Invalid llm empty reasonning: {reasonning} ({prp})"
 
     prompt = re.sub("child(ren)?|kid", "young person", prompt.lower())
