@@ -612,11 +612,9 @@ class AnkiIllustrator:
             # future field content
             field_content = f'<img src="{img_name}" '
 
-            # Check if debug mode is enabled (with default to False if not set)
-            debug_mode = getattr(self, 'debug', False)
 
             # Include detailed metadata only in debug mode
-            if debug_mode:
+            if self.debug:
                 field_content += f'title="DATE:{self.today} '
                 if "stablediffusion" in self.image_model.lower():
                     field_content += f"STEPS:{self.sd_steps} "
@@ -665,7 +663,7 @@ class AnkiIllustrator:
                     show_section = True
                 else:
                     # Only show other sections in debug mode (default to False if not set)
-                    show_section = getattr(self, 'debug', False)
+                    show_section = self.debug
 
             # Add the line if it's in a section we want to show
             if show_section:
@@ -678,12 +676,10 @@ class AnkiIllustrator:
         reason = "<br>".join(filtered_reason)
         full_html += f"<br>{reason}"
 
-        # Add prompt only in debug mode
-        if getattr(self, 'debug', False):
+        if self.debug:
+            # Add prompt only in debug mode
             full_html += f'<br><br><b>Prompt</b> "{escape(imgs_dict[0]["img_prompt"])}"'.replace("\n", "<br>")
-
-        # add version and date only in debug mode
-        if getattr(self, 'debug', False):
+            # Add discarded text only in debug mode
             full_html += f"<br>[DATE:{self.today} VERSION:{self.VERSION} LLMMODEL:{self.llm_model} IMAGEMODEL:{self.image_model} COST:{total_cost:.4f}]"
 
         # restore previous field content if nonempty
