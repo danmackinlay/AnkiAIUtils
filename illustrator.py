@@ -120,8 +120,9 @@ class AnkiIllustrator:
 
     def __init__(
         self,
-        query: str = "(rated:2:1 OR rated:2:2 OR tag:AnkiIllustrator::todo OR tag:AnkiIllustrator::FAILED) -tag:AnkiIllustrator::to_keep -is:suspended -card:Mnemonic:*img*",
+        query: str = "(rated:2:1 OR rated:2:2 OR tag:AnkiIllustrator::todo OR tag:AnkiIllustrator::FAILED) -tag:AnkiIllustrator::to_keep -is:suspended",
         field_names: List[str] = None,
+        output_field: str = "Mnemonic",
         n_image: int = 1,
         sd_steps: int = 100,
         n_note_limit: int = 500,
@@ -153,6 +154,10 @@ class AnkiIllustrator:
         field_names: List[str], default None
             list (or comma separated string) of the field of the note to load
             and give to the LLM as prompt.
+
+        output_field: str, default "Mnemonic"
+            The name of the field where the generated images and explanation will be stored.
+            If the field doesn't exist in a note, it will be created.
 
         n_image: int, default 1
             number of image to generate
@@ -242,6 +247,9 @@ class AnkiIllustrator:
         self.disable_notif = disable_notif
         self.n_image = n_image
         self.major_system = major_system
+        self.output_field = output_field
+        self.force = force
+        self.debug = debug
 
         # Load all notes first to get fields if None is provided
         if field_names is None:
@@ -370,13 +378,13 @@ class AnkiIllustrator:
         # check if we should process the notes
         filtered_notes = []
         for note in notes_info:
-            # Skip notes that already have images in the Mnemonic field unless force is used
-            if "Mnemonic" in note["fields"] and note["fields"]["Mnemonic"]["value"].strip():
-                mnemonic_content = note["fields"]["Mnemonic"]["value"]
+            # Skip notes that already have images in the output field unless force is used
+            if self.output_field in note["fields"] and note["fields"][self.output_field]["value"].strip():
+                field_content = note["fields"][self.output_field]["value"]
 
                 # Check for image content without using replace_media
-                if "<img " in mnemonic_content and not force:
-                    red(f"Skipping note {note['noteId']} as it already has images (use --force to override)")
+                if "<img " in field_content and not force:
+                    red(f"Skipping note {note['noteId']} as it already has images in {self.output_field} field (use --force to override)")
                     continue
 
             filtered_notes.append(note)
@@ -564,16 +572,16 @@ class AnkiIllustrator:
         n = len(imgs_dict)
         contenthash = hashlib.md5(
             str(note["formatted_content"]).encode()).hexdigest()
-        
-        # Use Mnemonic field instead of AnkiIllustrator
-        if "Mnemonic" not in note["fields"]:
-            # Need to add Mnemonic field to the note
-            red(f"Note {note['noteId']} doesn't have a Mnemonic field. Adding it.")
+
+        # Use output_field parameter to determine where to store the image
+        if self.output_field not in note["fields"]:
+            # Need to add the output field to the note
+            red(f"Note {note['noteId']} doesn't have a {self.output_field} field. Adding it.")
             # Create empty field in Anki note
-            updatenote(note["noteId"], fields={"Mnemonic": ""})
+            updatenote(note["noteId"], fields={self.output_field: ""})
             original_content = ""
         else:
-            original_content = note["fields"]["Mnemonic"]["value"].strip()
+            original_content = note["fields"][self.output_field]["value"].strip()
 
         full_html = ""
         imgs_name = []
@@ -698,8 +706,8 @@ class AnkiIllustrator:
         assert "{{c1::" not in full_html, f"Failed to substitute cloze markups before storing to field"
 
         # update the note
-        yel("Updating note field")
-        updatenote(nid, fields={"Mnemonic": full_html})
+        yel(f"Updating {self.output_field} field")
+        updatenote(nid, fields={self.output_field: full_html})
 
         # add tag to updated note
         yel("Adding tag")
