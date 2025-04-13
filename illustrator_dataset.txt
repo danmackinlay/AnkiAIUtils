@@ -1,0 +1,65 @@
+Your task is as follows:
+
+1. **Purpose:**
+   Convert a technical language flashcard into a written image prompt for MODEL's image generation API. The resulting prompt must be concrete, memorable, and free of technical terms.
+
+2. **Language & Puns:**
+   - Do not include any direct mention of languages, flags, or country symbols.
+   - Instead, intuitively incorporate puns that reflect the sound clues from both sides (e.g. if a German term sounds similar to an English word, include puns for both sounds).
+   - There's no need for any phonetic number system references.
+
+3. **Gender Colour Mnemonics:**
+   - When the flashcard contains a noun with a grammatical gender, include in your final image prompt a dominant colour cue:
+     • **Masculine:** add blue tones
+     • **Feminine:** add pink hues
+     • **Neuter:** add orange accents
+   - Do not hint at gender in any other way; the colour scheme must be the sole signal.
+
+4. **Image Requirements & Format:**
+   - The final prompt must evoke a crisp, concrete image that's easy to remember.
+   - It should be structured as:
+     `(subject of the image), (descriptive keywords), (image style), (realism level)`
+   - Your answer must start with a step-by-step reasoning block that explains how you derived the visualization, followed on a new line by `Answer:` and then your final prompt enclosed in single quotes.
+
+5. **Examples:**
+   Use the following sample flashcards as inspiration.----
+Body: Überspannt means uptight.----
+**Step-by-step Reasoning:**
+– The German word "überspannt" is to be remembered via puns: it sounds like "spanners" (a tool) while its English equivalent "uptight" evokes a formal accessory such as a bow tie.
+– Create an image blending these puns: a character or scene that unites spanners and bow ties in a humorous way.
+– No gender colour is needed since no noun with gender is involved.
+
+*Answer:*
+'a stressed mechanic juggling spanners and bow ties, quirky, vivid, humorous, digital art, hyperrealist'----
+Body: Die Blume means flower.----
+**Step-by-step Reasoning:**
+– "Blume" sounds like "bloom" in English.
+– Form a playful image of a flower that's literally in bloom with whimsical elements to cue the pun.
+– Since "Blume" is feminine, include pink hues in the image prompt.
+
+*Answer:*
+'a laughing flower in full bloom with dominant pink petals accentuating its form, vibrant, whimsical, digital illustration, hyperrealist'----
+Body: Pedas means spicy.----
+**Step-by-step Reasoning:**
+– The Indonesian word "pedas" evokes the sensation of spiciness.
+– Use a pun by linking "pedas" to the act of "pedaling" — imagine a chili pepper riding a bicycle and leaving a trail of spicy flames.
+– No gender colour is indicated here.
+
+*Answer:*
+'a chili pepper riding a bicycle while exuding spicy flames, quirky, vivid, humorous, digital illustration, cartoon'----
+Body: Das Buch means book.----
+**Step-by-step Reasoning:**
+– "Buch" (book) serves as a double cue: it sounds like its English counterpart while also evoking mystical knowledge.
+– Conjure an image of a magical, glowing book filled with secrets.
+– As a neuter noun, the mnemonic colour is orange—include this in your description.
+
+*Answer:*
+'a magical book emanating a mysterious glow with dominant orange hues, enchanting, vibrant, whimsical, digital art, hyperrealist'----
+Body: Recurrent laryngeal nerve mobilizes vocal cords.----
+**Step-by-step Reasoning:**
+– Represent the "recurrent" nature with a looping or lasso-like element around the neck of a performer, symbolizing dynamic movement.
+– The visualization should be energetic and striking, capturing the technical concept via an unexpected pun.
+– No gender-specific noun; thus, no colour mnemonic is needed.
+
+*Answer:*
+'a dynamic singer on stage with a looping lasso around the neck, energetic, vivid, striking, digital illustration, semi-realistic'
