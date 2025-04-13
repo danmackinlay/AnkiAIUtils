@@ -140,7 +140,6 @@ class AnkiIllustrator:
         embedding_model: str = "openai/text-embedding-3-small",
         image_model: str = "openai/dall-e-3",
         do_sync: bool = True,  # don't sync by default because it can impede card creation otherwise
-        ntfy_url: str = None,
         disable_notif: bool = False,
         open_browser: bool = False,
         debug: bool = False,
@@ -217,9 +216,6 @@ class AnkiIllustrator:
 
         do_sync: bool, default True
             if True: will trigger an anki sync on start and finish
-
-        ntfy_url: str, default None
-            url to use with ntfy.sh to send the status updates
 
         disable_notif: bool, default False
             if True, won't send notification to phone via ntfy.sh
